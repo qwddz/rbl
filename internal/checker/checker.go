@@ -10,23 +10,23 @@ import (
 
 type Checker struct {
 	mtx sync.Mutex
-	wg  sync.WaitGroup
 }
 
 func New() *Checker {
 	return &Checker{
 		mtx: sync.Mutex{},
-		wg:  sync.WaitGroup{},
 	}
 }
 
 func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
+	var wg sync.WaitGroup
+
 	res := CheckResult{
 		Status: true,
 		Errors: make([]string, 0),
 	}
 
-	c.wg.Add(len(servers.Data))
+	wg.Add(len(servers.Data))
 
 	for _, srv := range servers.Data {
 		go func(srv string) {
@@ -41,11 +41,11 @@ func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
 				c.mtx.Unlock()
 			}
 
-			c.wg.Done()
+			wg.Done()
 		}(srv)
 	}
 
-	c.wg.Wait()
+	wg.Wait()
 
 	return res
 }
