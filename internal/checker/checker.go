@@ -9,16 +9,13 @@ import (
 )
 
 type Checker struct {
-	mtx sync.Mutex
 }
 
 func New() *Checker {
-	return &Checker{
-		mtx: sync.Mutex{},
-	}
+	return &Checker{}
 }
 
-func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
+func (c *Checker) LookupRBLWithServers(ip string, servers *servers.RBLServers) CheckResult {
 	var wg sync.WaitGroup
 
 	res := CheckResult{
@@ -33,12 +30,7 @@ func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
 			records, _ := net.LookupHost(c.prepareAddress(ip, srv))
 
 			if len(records) > 0 {
-				c.mtx.Lock()
-
 				res.Errors = append(res.Errors, srv)
-				res.Status = false
-
-				c.mtx.Unlock()
 			}
 
 			wg.Done()
@@ -46,6 +38,8 @@ func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
 	}
 
 	wg.Wait()
+
+	res.Status = len(res.Errors) == 0
 
 	return res
 }

@@ -6,7 +6,9 @@ import (
 )
 
 func main() {
-	res, err := rbl.New().CheckIPAddress("91.240.141.42")
+	log.Println("start checking...")
+
+	res, err := rbl.New().CheckIP("3.124.8.148")
 	if err != nil {
 		log.Fatalln(err)
 	}

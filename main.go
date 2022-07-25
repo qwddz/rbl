@@ -19,13 +19,17 @@ func New() *App {
 	return &app
 }
 
-func (app *App) CheckIPAddress(ip string) (checker.CheckResult, error) {
+func (app *App) CheckIP(ip string) (checker.CheckResult, error) {
+	return app.checkIPAddress(ip)
+}
+
+func (app *App) checkIPAddress(ip string) (checker.CheckResult, error) {
 	rbls, err := app.srv.GetRblServers()
 	if err != nil {
 		return checker.CheckResult{}, err
 	}
 
-	return app.checker.CheckIP(ip, rbls), nil
+	return app.checker.LookupRBLWithServers(ip, rbls), nil
 }
 
 func (app *App) configureChecker() {
