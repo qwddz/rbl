@@ -1,11 +1,12 @@
 package servers
 
 import (
+	"embed"
 	"encoding/json"
-	"io/ioutil"
-	"log"
-	"os"
 )
+
+//go:embed rbls.json
+var reader embed.FS
 
 type Servers struct {
 }
@@ -15,18 +16,7 @@ func New() *Servers {
 }
 
 func (s *Servers) GetRblServers() (*RBLServers, error) {
-	file, err := os.Open(RBLServersFile)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	bFile, err := ioutil.ReadAll(file)
+	bFile, err := reader.ReadFile("rbls.json")
 	if err != nil {
 		return nil, err
 	}

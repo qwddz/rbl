@@ -22,7 +22,7 @@ func New() *Checker {
 
 func (c *Checker) CheckIP(ip string, servers *servers.RBLServers) CheckResult {
 	res := CheckResult{
-		Status: false,
+		Status: true,
 		Errors: make([]string, 0),
 	}
 
