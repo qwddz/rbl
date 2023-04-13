@@ -25,7 +25,11 @@ func (c *Checker) LookupRBLWithServers(ip string, servers *servers.RBLServers) C
 
 	wg.Add(len(servers.Data))
 
+	lock := make(chan int, 20)
+
 	for _, srv := range servers.Data {
+		lock <- 1
+
 		go func(srv string) {
 			records, _ := net.LookupHost(c.prepareAddress(ip, srv))
 
@@ -33,7 +37,7 @@ func (c *Checker) LookupRBLWithServers(ip string, servers *servers.RBLServers) C
 				res.Errors = append(res.Errors, srv)
 			}
 
-			wg.Done()
+			<-lock
 		}(srv)
 	}
 
