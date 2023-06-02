@@ -2,46 +2,54 @@ package checker
 
 import (
 	"fmt"
-	"github.com/qwddz/rbl/internal/servers"
-	"net"
 	"strings"
 	"sync"
 )
 
+const CheckDNTFormat string = "%s.%s"
+
 type Checker struct {
+	lookuper LookupRBLHost
+
+	wg sync.WaitGroup
+}
+
+type CheckResult struct {
+	Status bool
+	Errors []string
 }
 
 func New() *Checker {
 	return &Checker{}
 }
 
-func (c *Checker) LookupRBLWithServers(ip string, servers *servers.RBLServers) CheckResult {
-	var wg sync.WaitGroup
-
+func (c *Checker) LookupRBLWithServers(ip string, servers []string) CheckResult {
 	res := CheckResult{
 		Status: true,
 		Errors: make([]string, 0),
 	}
 
-	wg.Add(len(servers.Data))
+	c.wg.Add(len(servers))
 
-	lock := make(chan int, 20)
+	lock := make(chan int, 50)
 
-	for _, srv := range servers.Data {
+	for _, srv := range servers {
 		lock <- 1
 
 		go func(srv string) {
-			records, _ := net.LookupHost(c.prepareAddress(ip, srv))
+			records := c.lookuper.LookupHost(c.prepareAddress(ip, srv))
 
 			if len(records) > 0 {
 				res.Errors = append(res.Errors, srv)
 			}
 
+			c.wg.Done()
+
 			<-lock
 		}(srv)
 	}
 
-	wg.Wait()
+	c.wg.Wait()
 
 	res.Status = len(res.Errors) == 0
 
